@@ -7,46 +7,14 @@
         <generator>Hugo -- gohugo.io</generator>
         <language>zh-cn</language>
         <copyright>LuningLee</copyright>
-        <lastBuildDate>Fri, 28 Mar 2025 18:40:58 +0800</lastBuildDate><atom:link href="https://Savannah99.github.io/index.xml" rel="self" type="application/rss+xml" /><item>
-        <title>MyFirstBlog-背单词记录第一周</title>
-        <link>https://Savannah99.github.io/p/myfirstblog-%E8%83%8C%E5%8D%95%E8%AF%8D%E8%AE%B0%E5%BD%95%E7%AC%AC%E4%B8%80%E5%91%A8/</link>
-        <pubDate>Fri, 28 Mar 2025 18:40:58 +0800</pubDate>
+        <lastBuildDate>Sun, 30 Mar 2025 19:46:00 +0800</lastBuildDate><atom:link href="https://Savannah99.github.io/index.xml" rel="self" type="application/rss+xml" /><item>
+        <title>Equivariant Multi-Modality Image Fusion(CVPR 2024) 阅读笔记</title>
+        <link>https://Savannah99.github.io/p/equivariant-multi-modality-image-fusioncvpr-2024-%E9%98%85%E8%AF%BB%E7%AC%94%E8%AE%B0/</link>
+        <pubDate>Sun, 30 Mar 2025 19:46:00 +0800</pubDate>
         
-        <guid>https://Savannah99.github.io/p/myfirstblog-%E8%83%8C%E5%8D%95%E8%AF%8D%E8%AE%B0%E5%BD%95%E7%AC%AC%E4%B8%80%E5%91%A8/</guid>
-        <description>&lt;p&gt;记录一下3月24日-3月28日期间的背单词情况。&lt;/p&gt;
-&lt;p&gt;最近一周平均每日背单词时间应该有200分钟，但因为前一周有些忙攒了很多要复习的单词，所以每天以复习为主，下周的计划是恢复之前每天100左右的新词学习量，争取在下一周把单词全部背完！&lt;/p&gt;
-&lt;p&gt;&lt;img src=&#34;https://Savannah99.github.io/p/myfirstblog-%E8%83%8C%E5%8D%95%E8%AF%8D%E8%AE%B0%E5%BD%95%E7%AC%AC%E4%B8%80%E5%91%A8/word.jpg&#34;
-	width=&#34;863&#34;
-	height=&#34;1920&#34;
-	srcset=&#34;https://Savannah99.github.io/p/myfirstblog-%E8%83%8C%E5%8D%95%E8%AF%8D%E8%AE%B0%E5%BD%95%E7%AC%AC%E4%B8%80%E5%91%A8/word_hu12578729101259841939.jpg 480w, https://Savannah99.github.io/p/myfirstblog-%E8%83%8C%E5%8D%95%E8%AF%8D%E8%AE%B0%E5%BD%95%E7%AC%AC%E4%B8%80%E5%91%A8/word_hu10390407286539697521.jpg 1024w&#34;
-	loading=&#34;lazy&#34;
-	
-		alt=&#34;word&#34;
-	
-	
-		class=&#34;gallery-image&#34; 
-		data-flex-grow=&#34;44&#34;
-		data-flex-basis=&#34;107px&#34;
-	
-&gt;&lt;/p&gt;
-</description>
-        </item>
-        <item>
-        <title>归档</title>
-        <link>https://Savannah99.github.io/archives/</link>
-        <pubDate>Tue, 28 May 2019 00:00:00 +0000</pubDate>
-        
-        <guid>https://Savannah99.github.io/archives/</guid>
-        <description></description>
-        </item>
-        <item>
-        <title></title>
-        <link>https://Savannah99.github.io/p/</link>
-        <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-        
-        <guid>https://Savannah99.github.io/p/</guid>
-        <description>&lt;p&gt;《Equivariant Multi-Modality Image Fusion》(CVPR 2024) 阅读笔记
-持续更新ing&amp;hellip;具体使用的方法了解了个大概，之后在继续补充细节&lt;/p&gt;
+        <guid>https://Savannah99.github.io/p/equivariant-multi-modality-image-fusioncvpr-2024-%E9%98%85%E8%AF%BB%E7%AC%94%E8%AE%B0/</guid>
+        <description>&lt;p&gt;《Equivariant Multi-Modality Image Fusion》(CVPR 2024) 阅读笔记&lt;/p&gt;
+&lt;p&gt;持续更新ing&amp;hellip;具体使用的方法了解了个大概，之后再继续补充细节&lt;/p&gt;
 &lt;h2 id=&#34;动机&#34;&gt;动机
 &lt;/h2&gt;&lt;p&gt;多模态图像融合（如红外-可见光、医学图像融合）旨在结合不同传感器的互补信息（如热辐射和纹理细节），生成信息更全面的融合图像。然而，这一任务面临两大挑战：&lt;/p&gt;
 &lt;ol&gt;
@@ -334,6 +302,38 @@ $$&lt;p&gt;
     &gt;GitHub链接&lt;/a&gt;&lt;/li&gt;
 &lt;/ul&gt;
 </description>
+        </item>
+        <item>
+        <title>MyFirstBlog-背单词记录第一周</title>
+        <link>https://Savannah99.github.io/p/myfirstblog-%E8%83%8C%E5%8D%95%E8%AF%8D%E8%AE%B0%E5%BD%95%E7%AC%AC%E4%B8%80%E5%91%A8/</link>
+        <pubDate>Fri, 28 Mar 2025 18:40:58 +0800</pubDate>
+        
+        <guid>https://Savannah99.github.io/p/myfirstblog-%E8%83%8C%E5%8D%95%E8%AF%8D%E8%AE%B0%E5%BD%95%E7%AC%AC%E4%B8%80%E5%91%A8/</guid>
+        <description>&lt;p&gt;记录一下3月24日-3月28日期间的背单词情况。&lt;/p&gt;
+&lt;p&gt;最近一周平均每日背单词时间应该有200分钟，但因为前一周有些忙攒了很多要复习的单词，所以每天以复习为主，下周的计划是恢复之前每天100左右的新词学习量，争取在下一周把单词全部背完！&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;https://Savannah99.github.io/p/myfirstblog-%E8%83%8C%E5%8D%95%E8%AF%8D%E8%AE%B0%E5%BD%95%E7%AC%AC%E4%B8%80%E5%91%A8/word.jpg&#34;
+	width=&#34;863&#34;
+	height=&#34;1920&#34;
+	srcset=&#34;https://Savannah99.github.io/p/myfirstblog-%E8%83%8C%E5%8D%95%E8%AF%8D%E8%AE%B0%E5%BD%95%E7%AC%AC%E4%B8%80%E5%91%A8/word_hu12578729101259841939.jpg 480w, https://Savannah99.github.io/p/myfirstblog-%E8%83%8C%E5%8D%95%E8%AF%8D%E8%AE%B0%E5%BD%95%E7%AC%AC%E4%B8%80%E5%91%A8/word_hu10390407286539697521.jpg 1024w&#34;
+	loading=&#34;lazy&#34;
+	
+		alt=&#34;word&#34;
+	
+	
+		class=&#34;gallery-image&#34; 
+		data-flex-grow=&#34;44&#34;
+		data-flex-basis=&#34;107px&#34;
+	
+&gt;&lt;/p&gt;
+</description>
+        </item>
+        <item>
+        <title>归档</title>
+        <link>https://Savannah99.github.io/archives/</link>
+        <pubDate>Tue, 28 May 2019 00:00:00 +0000</pubDate>
+        
+        <guid>https://Savannah99.github.io/archives/</guid>
+        <description></description>
         </item>
         <item>
         <title>搜索</title>
