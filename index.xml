@@ -14,7 +14,8 @@
         
         <guid>https://Savannah99.github.io/p/equivariant-multi-modality-image-fusioncvpr-2024-%E9%98%85%E8%AF%BB%E7%AC%94%E8%AE%B0/</guid>
         <description>&lt;p&gt;《Equivariant Multi-Modality Image Fusion》(CVPR 2024) 阅读笔记&lt;/p&gt;
-&lt;p&gt;持续更新ing&amp;hellip;具体使用的方法了解了个大概，之后再继续补充细节&lt;/p&gt;
+&lt;p&gt;持续更新ing&amp;hellip;
+3.30,了解了论文的motivation、大概的method还有效果，补充了motivation不懂的地方的知识，继续补充method部分&lt;/p&gt;
 &lt;h2 id=&#34;动机&#34;&gt;动机
 &lt;/h2&gt;&lt;p&gt;多模态图像融合（如红外-可见光、医学图像融合）旨在结合不同传感器的互补信息（如热辐射和纹理细节），生成信息更全面的融合图像。然而，这一任务面临两大挑战：&lt;/p&gt;
 &lt;ol&gt;
@@ -137,8 +138,7 @@
 &lt;hr&gt;
 &lt;h4 id=&#34;3-现有方法过度依赖先验假设如低秩稀疏性&#34;&gt;3. &lt;strong&gt;现有方法过度依赖先验假设（如低秩、稀疏性）&lt;/strong&gt;
 &lt;/h4&gt;&lt;p&gt;&lt;strong&gt;原理&lt;/strong&gt;：&lt;br&gt;
-部分方法假设融合图像具有特定结构，如低秩（矩阵秩[^秩]低）、稀疏性（大部分系数为零）或多尺度分解（不同频段分离）。&lt;br&gt;
-[^秩]：矩阵中线性无关的行或列的最大数量。计算方式是将矩阵通过初等行变换（如高斯消元法）化为行阶梯形矩阵，非零行的数量即为秩。&lt;/p&gt;
+部分方法假设融合图像具有特定结构，如低秩（矩阵秩&lt;sup id=&#34;fnref:1&#34;&gt;&lt;a href=&#34;#fn:1&#34; class=&#34;footnote-ref&#34; role=&#34;doc-noteref&#34;&gt;1&lt;/a&gt;&lt;/sup&gt;低）、稀疏性（大部分系数为零）或多尺度分解（不同频段分离）。&lt;/p&gt;
 &lt;p&gt;&lt;strong&gt;局限性&lt;/strong&gt;：&lt;/p&gt;
 &lt;ul&gt;
 &lt;li&gt;&lt;strong&gt;先验失效&lt;/strong&gt;：真实场景可能违反假设。例如：
@@ -150,9 +150,7 @@
 &lt;li&gt;&lt;strong&gt;领域依赖性&lt;/strong&gt;：先验假设需依赖领域知识，难以泛化到新场景。例如，医学图像中的病灶可能不符合自然图像的稀疏性假设。&lt;/li&gt;
 &lt;/ul&gt;
 &lt;p&gt;&lt;strong&gt;案例&lt;/strong&gt;：&lt;br&gt;
-在医学融合（MRI-PET）中，低秩假设可能平滑代谢活跃区域（PET高亮[^PET]），而稀疏性假设会忽略连续的解剖结构（MRI软组织[^MRI]）。&lt;br&gt;
-[^PET]：&lt;strong&gt;（正电子发射断层扫描，Positron Emission Tomography）&lt;strong&gt;是一种&lt;/strong&gt;功能性医学成像技术&lt;/strong&gt;，通过检测放射性示踪剂在人体内的分布，反映组织的代谢活动水平。其核心原理是： 1.示踪剂注射：患者注射含有正电子发射核素（如氟代脱氧葡萄糖，¹⁸F-FDG）的示踪剂。2.代谢追踪：示踪剂在体内参与代谢过程（如肿瘤细胞对葡萄糖的高摄取），释放正电子。3.信号检测：正电子与周围电子湮灭产生γ光子对，被PET探测器捕获，生成三维代谢活性图像。 &amp;gt;&lt;em&gt;PET图像中的高亮区域（如肿瘤代谢活跃区）通常包含局部细节和动态变化信息。低秩约束会强制融合结果保留“主要结构”，导致这些高亮区域被过度平滑，代谢活动的边界模糊化。&lt;/em&gt;&lt;/p&gt;
-&lt;p&gt;[^MRI]：&lt;strong&gt;（Magnetic Resonance Imaging，磁共振成像）&lt;strong&gt;是一种&lt;/strong&gt;无创医学成像技术&lt;/strong&gt;，利用&lt;strong&gt;强磁场&lt;/strong&gt;和&lt;strong&gt;射频脉冲&lt;/strong&gt;生成人体内部器官和组织的详细结构图像。其核心原理基于原子核（主要是氢原子核）在磁场中的共振特性。&amp;gt;&lt;em&gt;MRI软组织（如脑灰质、血管）通常呈现连续、平滑的解剖结构。稀疏性约束会强制保留“显著边缘”，但可能忽略连续的解剖细节，导致结构断裂或缺失。&lt;/em&gt;&lt;/p&gt;
+在医学融合（MRI-PET）中，低秩假设可能平滑代谢活跃区域（PET高亮&lt;sup id=&#34;fnref:2&#34;&gt;&lt;a href=&#34;#fn:2&#34; class=&#34;footnote-ref&#34; role=&#34;doc-noteref&#34;&gt;2&lt;/a&gt;&lt;/sup&gt;），而稀疏性假设会忽略连续的解剖结构（MRI软组织&lt;sup id=&#34;fnref:3&#34;&gt;&lt;a href=&#34;#fn:3&#34; class=&#34;footnote-ref&#34; role=&#34;doc-noteref&#34;&gt;3&lt;/a&gt;&lt;/sup&gt;）。&lt;/p&gt;
 &lt;p&gt;&lt;strong&gt;论文支撑&lt;/strong&gt;：&lt;/p&gt;
 &lt;blockquote&gt;
 &lt;p&gt;&lt;em&gt;&amp;ldquo;现有方法依赖对融合图像的先验假设（如低秩、稀疏性），但这些假设在真实场景中可能失效&amp;rdquo;&lt;/em&gt;（Section 1）。&lt;/p&gt;
@@ -192,115 +190,20 @@
 &lt;p&gt;&lt;strong&gt;论文改进&lt;/strong&gt;：&lt;br&gt;
 EMMA提出通过&lt;strong&gt;等变性先验&lt;/strong&gt;（如平移、旋转不变性）和&lt;strong&gt;伪感知模块&lt;/strong&gt;替代手工损失与先验假设，避免领域依赖性问题，并通过自监督学习提升泛化性（Section 3.3）。&lt;/p&gt;
 &lt;hr&gt;
-&lt;h2 id=&#34;提出方法emma框架&#34;&gt;提出方法：EMMA框架
-&lt;/h2&gt;&lt;p&gt;&lt;strong&gt;核心思想&lt;/strong&gt;：利用自然图像的&lt;strong&gt;等变性&lt;/strong&gt;（如平移、旋转、反射等变换不影响图像内容）设计自监督学习范式&lt;/p&gt;
-&lt;h3 id=&#34;1-关键模块&#34;&gt;1. 关键模块
-&lt;/h3&gt;&lt;ul&gt;
-&lt;li&gt;
-&lt;p&gt;&lt;strong&gt;U-Fuser（融合模块）&lt;/strong&gt;&lt;/p&gt;
-&lt;ul&gt;
-&lt;li&gt;
-&lt;p&gt;基于U-Net结构，结合Restormer（全局建模）和ResNet（局部建模）&lt;/p&gt;
-&lt;/li&gt;
-&lt;li&gt;
-&lt;p&gt;实现跨模态特征的高效融合&lt;/p&gt;
-&lt;/li&gt;
-&lt;/ul&gt;
-&lt;/li&gt;
-&lt;li&gt;
-&lt;p&gt;&lt;strong&gt;伪感知模块&lt;/strong&gt;&lt;/p&gt;
-&lt;ul&gt;
-&lt;li&gt;
-&lt;p&gt;通过U-Net学习从融合图像到源图像的映射（如红外和可见光图像）&lt;/p&gt;
-&lt;/li&gt;
-&lt;li&gt;
-&lt;p&gt;模拟传感器的成像过程&lt;/p&gt;
-&lt;/li&gt;
-&lt;/ul&gt;
-&lt;/li&gt;
-&lt;li&gt;
-&lt;p&gt;&lt;strong&gt;等变融合模块&lt;/strong&gt;&lt;/p&gt;
-&lt;ul&gt;
-&lt;li&gt;确保融合图像满足等变性：对融合图像施加变换后，通过伪感知和再融合的结果应与原始变换后的图像一致&lt;/li&gt;
-&lt;/ul&gt;
-&lt;/li&gt;
-&lt;/ul&gt;
-&lt;h3 id=&#34;2-训练流程&#34;&gt;2. 训练流程
-&lt;/h3&gt;&lt;ul&gt;
-&lt;li&gt;
-&lt;ol&gt;
-&lt;li&gt;&lt;strong&gt;预训练伪感知模块&lt;/strong&gt;&lt;/li&gt;
-&lt;/ol&gt;
-&lt;ul&gt;
-&lt;li&gt;利用现有SOTA方法的融合结果作为伪标签&lt;/li&gt;
-&lt;li&gt;学习从融合图像到源图像的映射（损失函数为L2距离）&lt;/li&gt;
-&lt;/ul&gt;
-&lt;/li&gt;
-&lt;li&gt;
-&lt;ol start=&#34;2&#34;&gt;
-&lt;li&gt;&lt;strong&gt;冻结伪感知模块，训练U-Fuser&lt;/strong&gt;&lt;/li&gt;
-&lt;/ol&gt;
-&lt;ul&gt;
-&lt;li&gt;感知损失：&lt;code&gt;L(Ai(f), i) + L(Av(f), v)&lt;/code&gt;&lt;/li&gt;
-&lt;li&gt;等变损失：&lt;code&gt;L(ft, f̂t)&lt;/code&gt;&lt;/li&gt;
-&lt;/ul&gt;
-&lt;/li&gt;
-&lt;/ul&gt;
-&lt;h3 id=&#34;3-数学支撑&#34;&gt;3. 数学支撑
-&lt;/h3&gt;$$
-\mathcal{F}(\mathcal{A}_i(T_g f), \mathcal{A}_v(T_g f)) = T_g \mathcal{F}(\mathcal{A}_i(f), \mathcal{A}_v(f))
-$$&lt;p&gt;
-该约束缩小了解空间，增强了模型对复杂场景的适应能力&lt;/p&gt;
+&lt;div class=&#34;footnotes&#34; role=&#34;doc-endnotes&#34;&gt;
 &lt;hr&gt;
-&lt;h2 id=&#34;最终效果&#34;&gt;最终效果
-&lt;/h2&gt;&lt;h3 id=&#34;1-图像融合性能&#34;&gt;1. 图像融合性能
-&lt;/h3&gt;&lt;ul&gt;
-&lt;li&gt;&lt;strong&gt;数据集&lt;/strong&gt;：红外-可见光（MSRS、RoadScene、M3FD）和医学图像（Harvard）&lt;/li&gt;
-&lt;li&gt;&lt;strong&gt;指标&lt;/strong&gt;（MSRS数据集）：
-&lt;table&gt;
-  &lt;thead&gt;
-      &lt;tr&gt;
-          &lt;th&gt;指标&lt;/th&gt;
-          &lt;th&gt;EN↑&lt;/th&gt;
-          &lt;th&gt;SD↑&lt;/th&gt;
-      &lt;/tr&gt;
-  &lt;/thead&gt;
-  &lt;tbody&gt;
-      &lt;tr&gt;
-          &lt;td&gt;原SOTA&lt;/td&gt;
-          &lt;td&gt;6.70&lt;/td&gt;
-          &lt;td&gt;43.38&lt;/td&gt;
-      &lt;/tr&gt;
-      &lt;tr&gt;
-          &lt;td&gt;EMMA&lt;/td&gt;
-          &lt;td&gt;&lt;strong&gt;6.71&lt;/strong&gt;&lt;/td&gt;
-          &lt;td&gt;&lt;strong&gt;44.13&lt;/strong&gt;&lt;/td&gt;
-      &lt;/tr&gt;
-  &lt;/tbody&gt;
-&lt;/table&gt;
+&lt;ol&gt;
+&lt;li id=&#34;fn:1&#34;&gt;
+&lt;p&gt;秩是矩阵中线性无关的行或列的最大数量。计算方式是将矩阵通过初等行变换（如高斯消元法）化为行阶梯形矩阵，非零行的数量即为秩。&amp;#160;&lt;a href=&#34;#fnref:1&#34; class=&#34;footnote-backref&#34; role=&#34;doc-backlink&#34;&gt;&amp;#x21a9;&amp;#xfe0e;&lt;/a&gt;&lt;/p&gt;
 &lt;/li&gt;
-&lt;li&gt;&lt;strong&gt;视觉效果&lt;/strong&gt;：
-&lt;ul&gt;
-&lt;li&gt;同时保留热辐射信息（暗光物体）和纹理细节（边缘清晰度）&lt;/li&gt;
-&lt;li&gt;图3/4显示融合图像消除冗余信息并增强目标可见性&lt;/li&gt;
-&lt;/ul&gt;
+&lt;li id=&#34;fn:2&#34;&gt;
+&lt;p&gt;PET（正电子发射断层扫描，Positron Emission Tomography）是一种功能性医学成像技术，通过检测放射性示踪剂在人体内的分布，反映组织的代谢活动水平。其核心原理是： 1.示踪剂注射：患者注射含有正电子发射核素（如氟代脱氧葡萄糖，¹⁸F-FDG）的示踪剂。2.代谢追踪：示踪剂在体内参与代谢过程（如肿瘤细胞对葡萄糖的高摄取），释放正电子。3.信号检测：正电子与周围电子湮灭产生γ光子对，被PET探测器捕获，生成三维代谢活性图像。PET图像中的高亮区域（如肿瘤代谢活跃区）通常包含局部细节和动态变化信息。低秩约束会强制融合结果保留“主要结构”，导致这些高亮区域被过度平滑，代谢活动的边界模糊化。&amp;#160;&lt;a href=&#34;#fnref:2&#34; class=&#34;footnote-backref&#34; role=&#34;doc-backlink&#34;&gt;&amp;#x21a9;&amp;#xfe0e;&lt;/a&gt;&lt;/p&gt;
 &lt;/li&gt;
-&lt;/ul&gt;
-&lt;h3 id=&#34;2-下游任务提升&#34;&gt;2. 下游任务提升
-&lt;/h3&gt;&lt;ul&gt;
-&lt;li&gt;&lt;strong&gt;目标检测&lt;/strong&gt;（M3FD）： &lt;br&gt;
-&lt;a class=&#34;link&#34; href=&#34;mailto:mAP@0.5&#34; &gt;mAP@0.5&lt;/a&gt;从82.9%提升至&lt;strong&gt;82.9%&lt;/strong&gt;（保持SOTA水平）&lt;/li&gt;
-&lt;li&gt;&lt;strong&gt;语义分割&lt;/strong&gt;（MSRS）： &lt;br&gt;
-平均IoU从63.2%提升至&lt;strong&gt;63.7%&lt;/strong&gt;&lt;/li&gt;
-&lt;/ul&gt;
-&lt;h3 id=&#34;3-优势总结&#34;&gt;3. 优势总结
-&lt;/h3&gt;&lt;ul&gt;
-&lt;li&gt;&lt;strong&gt;无需真实标签&lt;/strong&gt;：通过等变性先验实现自监督学习&lt;/li&gt;
-&lt;li&gt;&lt;strong&gt;强泛化性&lt;/strong&gt;：直接迁移到医学图像融合无需微调&lt;/li&gt;
-&lt;li&gt;&lt;strong&gt;可解释性&lt;/strong&gt;：伪感知模块显式建模成像过程&lt;/li&gt;
-&lt;li&gt;&lt;strong&gt;开源代码&lt;/strong&gt;：&lt;a class=&#34;link&#34; href=&#34;https://github.com/Zhaozixiang1228/MMIF-EMMA&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
-    &gt;GitHub链接&lt;/a&gt;&lt;/li&gt;
-&lt;/ul&gt;
+&lt;li id=&#34;fn:3&#34;&gt;
+&lt;p&gt;MRI（Magnetic Resonance Imaging，磁共振成像）是一种无创医学成像技术，利用强磁场和射频脉冲生成人体内部器官和组织的详细结构图像。其核心原理基于原子核（主要是氢原子核）在磁场中的共振特性。MRI软组织（如脑灰质、血管）通常呈现连续、平滑的解剖结构。稀疏性约束会强制保留“显著边缘”，但可能忽略连续的解剖细节，导致结构断裂或缺失。&amp;#160;&lt;a href=&#34;#fnref:3&#34; class=&#34;footnote-backref&#34; role=&#34;doc-backlink&#34;&gt;&amp;#x21a9;&amp;#xfe0e;&lt;/a&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;/div&gt;
 </description>
         </item>
         <item>
