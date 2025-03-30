@@ -1,0 +1,778 @@
+<!DOCTYPE html>
+<html lang="zh-cn" dir="ltr">
+    <head><meta charset='utf-8'>
+<meta name='viewport' content='width=device-width, initial-scale=1'><meta name='description' content="《Equivariant Multi-Modality Image Fusion》(CVPR 2024) 阅读笔记 持续更新ing&hellip;具体使用的方法了解了个大概，之后在继续补充细节\n动机 多模态图像融合（如红外-可见光、医学图像融合）旨在结合不同传感器的互补信息（如热辐射和纹理细节），生成信息更全面的融合图像。然而，这一任务面临两大挑战：\n">
+<title></title>
+
+<link rel='canonical' href='https://Savannah99.github.io/p/'>
+
+<link rel="stylesheet" href="/scss/style.min.663803bebe609202d5b39d848f2d7c2dc8b598a2d879efa079fa88893d29c49c.css"><meta property='og:title' content="">
+<meta property='og:description' content="《Equivariant Multi-Modality Image Fusion》(CVPR 2024) 阅读笔记 持续更新ing&hellip;具体使用的方法了解了个大概，之后在继续补充细节\n动机 多模态图像融合（如红外-可见光、医学图像融合）旨在结合不同传感器的互补信息（如热辐射和纹理细节），生成信息更全面的融合图像。然而，这一任务面临两大挑战：\n">
+<meta property='og:url' content='https://Savannah99.github.io/p/'>
+<meta property='og:site_name' content='LuningLee'>
+<meta property='og:type' content='article'><meta property='article:section' content='Post' />
+<meta name="twitter:title" content="">
+<meta name="twitter:description" content="《Equivariant Multi-Modality Image Fusion》(CVPR 2024) 阅读笔记 持续更新ing&hellip;具体使用的方法了解了个大概，之后在继续补充细节\n动机 多模态图像融合（如红外-可见光、医学图像融合）旨在结合不同传感器的互补信息（如热辐射和纹理细节），生成信息更全面的融合图像。然而，这一任务面临两大挑战：\n">
+    </head>
+    <body class="
+    article-page
+    ">
+    <script>
+        (function() {
+            const colorSchemeKey = 'StackColorScheme';
+            if(!localStorage.getItem(colorSchemeKey)){
+                localStorage.setItem(colorSchemeKey, "auto");
+            }
+        })();
+    </script><script>
+    (function() {
+        const colorSchemeKey = 'StackColorScheme';
+        const colorSchemeItem = localStorage.getItem(colorSchemeKey);
+        const supportDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches === true;
+
+        if (colorSchemeItem == 'dark' || colorSchemeItem === 'auto' && supportDarkMode) {
+            
+
+            document.documentElement.dataset.scheme = 'dark';
+        } else {
+            document.documentElement.dataset.scheme = 'light';
+        }
+    })();
+</script>
+<div class="container main-container flex on-phone--column extended"><aside class="sidebar left-sidebar sticky ">
+    <button class="hamburger hamburger--spin" type="button" id="toggle-menu" aria-label="切换菜单">
+        <span class="hamburger-box">
+            <span class="hamburger-inner"></span>
+        </span>
+    </button>
+
+    <header>
+        
+            
+            <figure class="site-avatar">
+                <a href="/">
+                
+                    
+                    
+                    
+                        
+                        <img src="/img/avatar_hu17057760802939032854.png" width="300"
+                            height="300" class="site-logo" loading="lazy" alt="Avatar">
+                    
+                
+                </a>
+                
+                    <span class="emoji">🐣</span>
+                
+            </figure>
+            
+        
+        
+        <div class="site-meta">
+            <h1 class="site-name"><a href="/">LuningLee</a></h1>
+            <h2 class="site-description">欢迎来到我的博客！我在这里记录一些生活日常和学习笔记！😸🥰🐕</h2>
+        </div>
+    </header><ol class="menu-social">
+            
+                <li>
+                    <a 
+                        href='https://github.com/Savannah99'
+                        target="_blank"
+                        title="GitHub"
+                        rel="me"
+                    >
+                        
+                        
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brand-github" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M9 19c-4.3 1.4 -4.3 -2.5 -6 -3m12 5v-3.5c0 -1 .1 -1.4 -.5 -2c2.8 -.3 5.5 -1.4 5.5 -6a4.6 4.6 0 0 0 -1.3 -3.2a4.2 4.2 0 0 0 -.1 -3.2s-1.1 -.3 -3.5 1.3a12.3 12.3 0 0 0 -6.2 0c-2.4 -1.6 -3.5 -1.3 -3.5 -1.3a4.2 4.2 0 0 0 -.1 3.2a4.6 4.6 0 0 0 -1.3 3.2c0 4.6 2.7 5.7 5.5 6c-.6 .6 -.6 1.2 -.5 2v3.5" />
+</svg>
+
+
+
+                        
+                    </a>
+                </li>
+            
+        </ol><ol class="menu" id="main-menu">
+        
+        
+        
+        <li >
+            <a href='/' >
+                
+                
+                
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-home" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <polyline points="5 12 3 12 12 3 21 12 19 12" />
+  <path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-7" />
+  <path d="M9 21v-6a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v6" />
+</svg>
+
+
+
+                
+                <span>主页</span>
+            </a>
+        </li>
+        
+        
+        <li >
+            <a href='/archives/' >
+                
+                
+                
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-archive" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <rect x="3" y="4" width="18" height="4" rx="2" />
+  <path d="M5 8v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-10" />
+  <line x1="10" y1="12" x2="14" y2="12" />
+</svg>
+
+
+
+                
+                <span>归档</span>
+            </a>
+        </li>
+        
+        
+        <li >
+            <a href='/search/' >
+                
+                
+                
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-search" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="10" cy="10" r="7" />
+  <line x1="21" y1="21" x2="15" y2="15" />
+</svg>
+
+
+
+                
+                <span>搜索</span>
+            </a>
+        </li>
+        
+        <li class="menu-bottom-section">
+            <ol class="menu">
+
+                
+                    <li id="dark-mode-toggle">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-left" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="8" cy="12" r="2" />
+  <rect x="2" y="6" width="20" height="12" rx="6" />
+</svg>
+
+
+
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-right" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="16" cy="12" r="2" />
+  <rect x="2" y="6" width="20" height="12" rx="6" />
+</svg>
+
+
+
+                        <span>暗色模式</span>
+                    </li>
+                
+            </ol>
+        </li>
+    </ol>
+</aside>
+
+    <aside class="sidebar right-sidebar sticky">
+        
+            
+                
+    <section class="widget archives">
+        <div class="widget-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-hash" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <line x1="5" y1="9" x2="19" y2="9" />
+  <line x1="5" y1="15" x2="19" y2="15" />
+  <line x1="11" y1="4" x2="7" y2="20" />
+  <line x1="17" y1="4" x2="13" y2="20" />
+</svg>
+
+
+
+        </div>
+        <h2 class="widget-title section-title">目录</h2>
+        
+        <div class="widget--toc">
+            <nav id="TableOfContents">
+  <ol>
+    <li><a href="#动机">动机</a>
+      <ol>
+        <li><a href="#多模态图像融合详解">多模态图像融合详解</a>
+          <ol>
+            <li><a href="#1-多模态图像融合的定义"><strong>1. 多模态图像融合的定义</strong></a></li>
+            <li><a href="#2-不同传感器及其成像特点"><strong>2. 不同传感器及其成像特点</strong></a></li>
+            <li><a href="#3-多模态图像融合的目标是生成一张整合多模态信息的图像"><strong>3. 多模态图像融合的目标是生成一张整合多模态信息的图像</strong></a></li>
+            <li><a href="#总结"><strong>总结</strong></a></li>
+          </ol>
+        </li>
+        <li><a href="#传统多模态图像融合方法的局限性详解">传统多模态图像融合方法的局限性详解</a>
+          <ol>
+            <li><a href="#1-生成模型如gan依赖分布对齐但训练不稳定且缺乏解释性">1. <strong>生成模型（如GAN）依赖分布对齐，但训练不稳定且缺乏解释性</strong></a></li>
+            <li><a href="#2-手工设计的损失函数如l1l2距离忽略了特征空间差异">2. <strong>手工设计的损失函数（如L1/L2距离）忽略了特征空间差异</strong></a></li>
+            <li><a href="#3-现有方法过度依赖先验假设如低秩稀疏性">3. <strong>现有方法过度依赖先验假设（如低秩、稀疏性）</strong></a></li>
+            <li><a href="#总结对比">总结对比</a></li>
+          </ol>
+        </li>
+      </ol>
+    </li>
+    <li><a href="#提出方法emma框架">提出方法：EMMA框架</a>
+      <ol>
+        <li><a href="#1-关键模块">1. 关键模块</a></li>
+        <li><a href="#2-训练流程">2. 训练流程</a></li>
+        <li><a href="#3-数学支撑">3. 数学支撑</a></li>
+      </ol>
+    </li>
+    <li><a href="#最终效果">最终效果</a>
+      <ol>
+        <li><a href="#1-图像融合性能">1. 图像融合性能</a></li>
+        <li><a href="#2-下游任务提升">2. 下游任务提升</a></li>
+        <li><a href="#3-优势总结">3. 优势总结</a></li>
+      </ol>
+    </li>
+  </ol>
+</nav>
+        </div>
+    </section>
+
+            
+        
+    </aside>
+
+
+            <main class="main full-width">
+    <article class="main-article">
+    <header class="article-header">
+
+    <div class="article-details">
+    
+
+    <div class="article-title-wrapper">
+        <h2 class="article-title">
+            <a href="/p/"></a>
+        </h2>
+    
+        
+    </div>
+
+    
+    
+    
+    
+
+    
+</div>
+
+</header>
+
+    <section class="article-content">
+    
+    
+    <p>《Equivariant Multi-Modality Image Fusion》(CVPR 2024) 阅读笔记
+持续更新ing&hellip;具体使用的方法了解了个大概，之后在继续补充细节</p>
+<h2 id="动机">动机
+</h2><p>多模态图像融合（如红外-可见光、医学图像融合）旨在结合不同传感器的互补信息（如热辐射和纹理细节），生成信息更全面的融合图像。然而，这一任务面临两大挑战：</p>
+<ol>
+<li>
+<p><strong>缺乏真实标签数据</strong>：现实中不存在能够同时捕获所有模态信息的&quot;超级传感器&quot;，导致无法通过监督学习直接训练模型。</p>
+</li>
+<li>
+<p><strong>传统方法的局限性</strong>：</p>
+<ul>
+<li>
+<p>生成模型（如GAN）依赖分布对齐，但训练不稳定且缺乏解释性</p>
+</li>
+<li>
+<p>手工设计的损失函数（如直接最小化融合图像与源图像的L1/L2距离）忽略了不同模态的特征空间差异，可能导致融合结果失真</p>
+</li>
+<li>
+<p>现有方法过度依赖对融合图像的先验假设（如低秩、稀疏性），但这些假设在真实场景中可能失效</p>
+<p>因此，作者提出从自然成像系统的<strong>等变性先验</strong>出发，构建自监督学习框架，避免依赖人工标注数据或强假设。</p>
+</li>
+</ul>
+</li>
+</ol>
+<h3 id="多模态图像融合详解">多模态图像融合详解
+</h3><h4 id="1-多模态图像融合的定义"><strong>1. 多模态图像融合的定义</strong>
+</h4><p>多模态图像融合（如红外-可见光、医学图像融合）通过结合不同传感器的互补信息（如红外传感器捕获的热辐射和可见光相机捕捉的纹理细节），生成一张信息更全面的融合图像。其核心目标是整合不同模态的优势，解决单一传感器的局限性。</p>
+<hr>
+<h4 id="2-不同传感器及其成像特点"><strong>2. 不同传感器及其成像特点</strong>
+</h4><div class="table-wrapper"><table>
+  <thead>
+      <tr>
+          <th>传感器类型</th>
+          <th>成像原理</th>
+          <th>图像特点</th>
+          <th>应用场景</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td><strong>可见光相机</strong></td>
+          <td>捕捉物体反射的可见光（400-700nm）</td>
+          <td>高分辨率、色彩丰富、依赖光照</td>
+          <td>白天监控、人脸识别</td>
+      </tr>
+      <tr>
+          <td><strong>红外传感器</strong></td>
+          <td>捕捉物体热辐射（3μm-14μm）</td>
+          <td>无色彩、显示温度差异、穿透烟雾</td>
+          <td>夜间监控、火灾监测</td>
+      </tr>
+      <tr>
+          <td><strong>X射线</strong></td>
+          <td>穿透物体后检测能量衰减</td>
+          <td>显示骨骼结构、低软组织对比度</td>
+          <td>骨折诊断、工业探伤</td>
+      </tr>
+      <tr>
+          <td><strong>MRI（磁共振）</strong></td>
+          <td>利用磁场和射频脉冲成像</td>
+          <td>高软组织对比度、无辐射</td>
+          <td>脑部肿瘤检测、关节病变诊断</td>
+      </tr>
+      <tr>
+          <td><strong>超声波</strong></td>
+          <td>声波反射成像</td>
+          <td>实时动态、无辐射但分辨率较低</td>
+          <td>胎儿监测、心血管检查</td>
+      </tr>
+  </tbody>
+</table></div>
+<p><strong>图像差异对比</strong>：</p>
+<ul>
+<li><strong>医学场景</strong>：MRI显示软组织细节（如脑肿瘤），X射线显示骨骼结构，融合后可同时观察肿瘤位置与骨骼关系。</li>
+</ul>
+<hr>
+<h4 id="3-多模态图像融合的目标是生成一张整合多模态信息的图像"><strong>3. 多模态图像融合的目标是生成一张整合多模态信息的图像</strong>
+</h4><p>例如：</p>
+<ul>
+<li><strong>红外-可见光融合图像</strong>：同时保留热辐射（暗光目标）和纹理细节（边缘清晰度）。</li>
+<li><strong>医学影像融合（MRI-PET）</strong>：结合解剖结构（MRI）和代谢活动（PET），辅助癌症诊断。</li>
+</ul>
+<p><strong>优势</strong>：</p>
+<ol>
+<li><strong>互补性</strong>：解决单一模态的缺陷（如可见光依赖光照、红外缺乏细节）。</li>
+<li><strong>增强信息量</strong>：在复杂环境（夜间、烟雾）中提供更全面的感知。</li>
+<li><strong>下游任务优化</strong>：提升目标检测、语义分割等任务的准确性（如夜间自动驾驶中融合红外和可见光数据）。</li>
+</ol>
+<hr>
+<h4 id="总结"><strong>总结</strong>
+</h4><p>多模态图像融合通过整合不同传感器的互补信息（如热辐射+纹理细节），生成一张信息更全面的图像。这种技术广泛应用于安防、医疗、自动驾驶等领域，是提升感知能力的关键手段。</p>
+<hr>
+<h3 id="传统多模态图像融合方法的局限性详解">传统多模态图像融合方法的局限性详解
+</h3><h4 id="1-生成模型如gan依赖分布对齐但训练不稳定且缺乏解释性">1. <strong>生成模型（如GAN）依赖分布对齐，但训练不稳定且缺乏解释性</strong>
+</h4><p><strong>原理</strong>：<br>
+生成对抗网络（GAN）通过生成器与判别器的对抗训练，迫使融合图像与源图像的分布对齐[融合图像需同时匹配红外和可见光图像的特征分布，形成联合概率分布，例如：在暗光区域，融合图像应接近红外图像的热分布；在纹理丰富区域，融合图像需接近可见光图像的纹理分布]。例如，生成器试图生成类似可见光纹理和红外热辐射的融合图像，而判别器则区分真实源图像与生成结果。</p>
+<p><strong>局限性</strong>：</p>
+<ul>
+<li><strong>训练不稳定</strong>：GAN的对抗训练容易陷入模式崩溃而生成单一结果（生成器发现某些样本能稳定欺骗判别器，陷入局部最优，如反复生成特定热目标而忽略其他特征）或梯度消失（判别器过于强大，生成器的梯度趋近于零，无法有效更新参数）。例如，在红外-可见光融合中，生成器可能仅复制可见光细节而忽略红外热目标。</li>
+<li><strong>缺乏解释性</strong>：GAN的生成过程是黑箱操作，难以解释融合图像如何平衡不同模态的特征。例如，医学图像融合时，无法确定病灶区域是否被准确保留。</li>
+<li><strong>依赖分布对齐</strong>：若源图像分布差异大（如MRI的软组织与CT的骨骼），GAN可能无法有效融合互补信息，导致关键特征丢失。</li>
+</ul>
+<p><strong>论文支撑</strong>：</p>
+<blockquote>
+<p><em>&ldquo;生成模型（如GAN）缺乏解释性、可控性，且存在训练挑战&rdquo;</em>（Section 1）。</p>
+</blockquote>
+<hr>
+<h4 id="2-手工设计的损失函数如l1l2距离忽略了特征空间差异">2. <strong>手工设计的损失函数（如L1/L2距离）忽略了特征空间差异</strong>
+</h4>$$\mathcal{L} = \|f - i_1\|_1 + \|f - i_2\|_1$$$$\mathcal{L} = \|f - i_1\|_2^2 + \|f - i_2\|_2^2$$<p><br>
+其中，$f$为融合图像，$i_1$和$i_2$为输入的红外和可见光图像。</p>
+<p><strong>局限性</strong>：</p>
+<ul>
+<li><strong>特征流形差异</strong>：不同模态的特征空间可能不重叠。例如，红外人体的热轮廓在可见光中可能对应无纹理的暗区； 可见光的道路纹理在红外中可能表现为低对比度的温度分布。强行对齐会导致融合结果失真（如热目标模糊或纹理断裂）。</li>
+<li><strong>信息冲突</strong>：融合图像可能被迫在矛盾特征间妥协（如平衡热目标与纹理细节），导致关键信息丢失。像素相似不代表语义对齐，例如融合图像可能在像素上平均热目标和背景，但语义上无法突出目标。</li>
+</ul>
+<p><strong>示例</strong>：<br>
+在夜间场景中，可见光图像噪声大，红外图像显示热目标。传统$\ell_1$损失（绝对误差损失）可能迫使融合图像在噪声区域与红外热目标之间平均，导致目标模糊或噪声被保留。</p>
+<p><strong>论文支撑</strong>：</p>
+<blockquote>
+<p><em>&ldquo;直接计算$$|f-i_1\| + \|f-i_2\|$$忽略了融合图像与源图像的特征流形差异&rdquo;</em>（Section 1）。</p>
+</blockquote>
+<hr>
+<h4 id="3-现有方法过度依赖先验假设如低秩稀疏性">3. <strong>现有方法过度依赖先验假设（如低秩、稀疏性）</strong>
+</h4><p><strong>原理</strong>：<br>
+部分方法假设融合图像具有特定结构，如低秩（矩阵秩[^秩]低）、稀疏性（大部分系数为零）或多尺度分解（不同频段分离）。<br>
+[^秩]：矩阵中线性无关的行或列的最大数量。计算方式是将矩阵通过初等行变换（如高斯消元法）化为行阶梯形矩阵，非零行的数量即为秩。</p>
+<p><strong>局限性</strong>：</p>
+<ul>
+<li><strong>先验失效</strong>：真实场景可能违反假设。例如：
+<ul>
+<li><strong>低秩假设</strong>：复杂纹理（如城市街景）需要高秩表示，低秩约束会导致细节丢失。</li>
+<li><strong>稀疏性假设</strong>：连续结构（如医学图像中的血管）无法用稀疏系数描述，导致融合结果断裂。</li>
+</ul>
+</li>
+<li><strong>领域依赖性</strong>：先验假设需依赖领域知识，难以泛化到新场景。例如，医学图像中的病灶可能不符合自然图像的稀疏性假设。</li>
+</ul>
+<p><strong>案例</strong>：<br>
+在医学融合（MRI-PET）中，低秩假设可能平滑代谢活跃区域（PET高亮[^PET]），而稀疏性假设会忽略连续的解剖结构（MRI软组织[^MRI]）。<br>
+[^PET]：<strong>（正电子发射断层扫描，Positron Emission Tomography）<strong>是一种</strong>功能性医学成像技术</strong>，通过检测放射性示踪剂在人体内的分布，反映组织的代谢活动水平。其核心原理是： 1.示踪剂注射：患者注射含有正电子发射核素（如氟代脱氧葡萄糖，¹⁸F-FDG）的示踪剂。2.代谢追踪：示踪剂在体内参与代谢过程（如肿瘤细胞对葡萄糖的高摄取），释放正电子。3.信号检测：正电子与周围电子湮灭产生γ光子对，被PET探测器捕获，生成三维代谢活性图像。 &gt;<em>PET图像中的高亮区域（如肿瘤代谢活跃区）通常包含局部细节和动态变化信息。低秩约束会强制融合结果保留“主要结构”，导致这些高亮区域被过度平滑，代谢活动的边界模糊化。</em></p>
+<p>[^MRI]：<strong>（Magnetic Resonance Imaging，磁共振成像）<strong>是一种</strong>无创医学成像技术</strong>，利用<strong>强磁场</strong>和<strong>射频脉冲</strong>生成人体内部器官和组织的详细结构图像。其核心原理基于原子核（主要是氢原子核）在磁场中的共振特性。&gt;<em>MRI软组织（如脑灰质、血管）通常呈现连续、平滑的解剖结构。稀疏性约束会强制保留“显著边缘”，但可能忽略连续的解剖细节，导致结构断裂或缺失。</em></p>
+<p><strong>论文支撑</strong>：</p>
+<blockquote>
+<p><em>&ldquo;现有方法依赖对融合图像的先验假设（如低秩、稀疏性），但这些假设在真实场景中可能失效&rdquo;</em>（Section 1）。</p>
+</blockquote>
+<hr>
+<h4 id="总结对比">总结对比
+</h4><div class="table-wrapper"><table>
+  <thead>
+      <tr>
+          <th>方法</th>
+          <th>核心思想</th>
+          <th>主要问题</th>
+          <th>典型场景失效案例</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td><strong>生成模型（GAN）</strong></td>
+          <td>分布对齐</td>
+          <td>训练不稳定、黑箱操作、无法处理模态分布差异</td>
+          <td>医学图像中病灶区域融合不完整</td>
+      </tr>
+      <tr>
+          <td><strong>手工损失函数</strong></td>
+          <td>最小化像素/特征距离</td>
+          <td>忽略特征流形差异、导致信息冲突或失真</td>
+          <td>夜间监控中热目标与纹理难以平衡</td>
+      </tr>
+      <tr>
+          <td><strong>先验假设方法</strong></td>
+          <td>约束融合图像结构（低秩/稀疏）</td>
+          <td>先验不符合真实场景、领域依赖性强</td>
+          <td>复杂城市街景细节丢失或医学结构断裂</td>
+      </tr>
+  </tbody>
+</table></div>
+<p><strong>论文改进</strong>：<br>
+EMMA提出通过<strong>等变性先验</strong>（如平移、旋转不变性）和<strong>伪感知模块</strong>替代手工损失与先验假设，避免领域依赖性问题，并通过自监督学习提升泛化性（Section 3.3）。</p>
+<hr>
+<h2 id="提出方法emma框架">提出方法：EMMA框架
+</h2><p><strong>核心思想</strong>：利用自然图像的<strong>等变性</strong>（如平移、旋转、反射等变换不影响图像内容）设计自监督学习范式</p>
+<h3 id="1-关键模块">1. 关键模块
+</h3><ul>
+<li>
+<p><strong>U-Fuser（融合模块）</strong></p>
+<ul>
+<li>
+<p>基于U-Net结构，结合Restormer（全局建模）和ResNet（局部建模）</p>
+</li>
+<li>
+<p>实现跨模态特征的高效融合</p>
+</li>
+</ul>
+</li>
+<li>
+<p><strong>伪感知模块</strong></p>
+<ul>
+<li>
+<p>通过U-Net学习从融合图像到源图像的映射（如红外和可见光图像）</p>
+</li>
+<li>
+<p>模拟传感器的成像过程</p>
+</li>
+</ul>
+</li>
+<li>
+<p><strong>等变融合模块</strong></p>
+<ul>
+<li>确保融合图像满足等变性：对融合图像施加变换后，通过伪感知和再融合的结果应与原始变换后的图像一致</li>
+</ul>
+</li>
+</ul>
+<h3 id="2-训练流程">2. 训练流程
+</h3><ul>
+<li>
+<ol>
+<li><strong>预训练伪感知模块</strong></li>
+</ol>
+<ul>
+<li>利用现有SOTA方法的融合结果作为伪标签</li>
+<li>学习从融合图像到源图像的映射（损失函数为L2距离）</li>
+</ul>
+</li>
+<li>
+<ol start="2">
+<li><strong>冻结伪感知模块，训练U-Fuser</strong></li>
+</ol>
+<ul>
+<li>感知损失：<code>L(Ai(f), i) + L(Av(f), v)</code></li>
+<li>等变损失：<code>L(ft, f̂t)</code></li>
+</ul>
+</li>
+</ul>
+<h3 id="3-数学支撑">3. 数学支撑
+</h3>$$
+\mathcal{F}(\mathcal{A}_i(T_g f), \mathcal{A}_v(T_g f)) = T_g \mathcal{F}(\mathcal{A}_i(f), \mathcal{A}_v(f))
+$$<p>
+该约束缩小了解空间，增强了模型对复杂场景的适应能力</p>
+<hr>
+<h2 id="最终效果">最终效果
+</h2><h3 id="1-图像融合性能">1. 图像融合性能
+</h3><ul>
+<li><strong>数据集</strong>：红外-可见光（MSRS、RoadScene、M3FD）和医学图像（Harvard）</li>
+<li><strong>指标</strong>（MSRS数据集）：
+<div class="table-wrapper"><table>
+  <thead>
+      <tr>
+          <th>指标</th>
+          <th>EN↑</th>
+          <th>SD↑</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td>原SOTA</td>
+          <td>6.70</td>
+          <td>43.38</td>
+      </tr>
+      <tr>
+          <td>EMMA</td>
+          <td><strong>6.71</strong></td>
+          <td><strong>44.13</strong></td>
+      </tr>
+  </tbody>
+</table></div>
+</li>
+<li><strong>视觉效果</strong>：
+<ul>
+<li>同时保留热辐射信息（暗光物体）和纹理细节（边缘清晰度）</li>
+<li>图3/4显示融合图像消除冗余信息并增强目标可见性</li>
+</ul>
+</li>
+</ul>
+<h3 id="2-下游任务提升">2. 下游任务提升
+</h3><ul>
+<li><strong>目标检测</strong>（M3FD）： <br>
+<a class="link" href="mailto:mAP@0.5" >mAP@0.5</a>从82.9%提升至<strong>82.9%</strong>（保持SOTA水平）</li>
+<li><strong>语义分割</strong>（MSRS）： <br>
+平均IoU从63.2%提升至<strong>63.7%</strong></li>
+</ul>
+<h3 id="3-优势总结">3. 优势总结
+</h3><ul>
+<li><strong>无需真实标签</strong>：通过等变性先验实现自监督学习</li>
+<li><strong>强泛化性</strong>：直接迁移到医学图像融合无需微调</li>
+<li><strong>可解释性</strong>：伪感知模块显式建模成像过程</li>
+<li><strong>开源代码</strong>：<a class="link" href="https://github.com/Zhaozixiang1228/MMIF-EMMA"  target="_blank" rel="noopener"
+    >GitHub链接</a></li>
+</ul>
+
+</section>
+
+
+    <footer class="article-footer">
+    
+
+    </footer>
+
+
+    
+        <link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css"integrity="sha384-n8MVd4RsNIU0tAv4ct0nTaAbDJwPJzDEaqSD1odI&#43;WdtXRGWt2kTvGFasHpSy3SV"crossorigin="anonymous"
+            ><script 
+                src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"integrity="sha384-XjKyOOlGwcjNTAIQHIpgOno0Hl1YQqzUOEleOLALmuqehneUG&#43;vnGctmUb0ZY0l8"crossorigin="anonymous"
+                defer
+                >
+            </script><script 
+                src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"integrity="sha384-&#43;VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4&#43;/RRE05"crossorigin="anonymous"
+                defer
+                >
+            </script><script>
+    window.addEventListener("DOMContentLoaded", () => {
+	const mainArticleElement = document.querySelector(".main-article");
+        renderMathInElement(mainArticleElement, {
+            delimiters: [
+                { left: "$$", right: "$$", display: true },
+                { left: "$", right: "$", display: false },
+                { left: "\\(", right: "\\)", display: false },
+                { left: "\\[", right: "\\]", display: true }
+            ],
+            ignoredClasses: ["gist"]
+        });})
+</script>
+
+    
+</article>
+
+    
+
+    
+
+     
+    
+        
+    
+
+    <footer class="site-footer">
+    <section class="copyright">
+        &copy; 
+        
+        2025 LuningLee
+    </section>
+    
+    <section class="powerby">
+        
+            流水不争先，滔滔而不绝 <br/>
+        使用 <a href="https://gohugo.io/" target="_blank" rel="noopener">Hugo</a> 构建 <br />
+        主题 <b><a href="https://github.com/CaiJimmy/hugo-theme-stack" target="_blank" rel="noopener" data-version="3.30.0">Stack</a></b> 由 <a href="https://jimmycai.com" target="_blank" rel="noopener">Jimmy</a> 设计
+    </section>
+</footer>
+
+
+    
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+
+    
+    <div class="pswp__bg"></div>
+
+    
+    <div class="pswp__scroll-wrap">
+
+        
+        <div class="pswp__container">
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+        </div>
+
+        
+        <div class="pswp__ui pswp__ui--hidden">
+
+            <div class="pswp__top-bar">
+
+                
+
+                <div class="pswp__counter"></div>
+
+                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+
+                <button class="pswp__button pswp__button--share" title="Share"></button>
+
+                <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+
+                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+
+                
+                
+                <div class="pswp__preloader">
+                    <div class="pswp__preloader__icn">
+                        <div class="pswp__preloader__cut">
+                            <div class="pswp__preloader__donut"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                <div class="pswp__share-tooltip"></div>
+            </div>
+
+            <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+            </button>
+
+            <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+            </button>
+
+            <div class="pswp__caption">
+                <div class="pswp__caption__center"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js"integrity="sha256-ePwmChbbvXbsO02lbM3HoHbSHTHFAeChekF1xKJdleo="crossorigin="anonymous"
+                defer
+                >
+            </script><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js"integrity="sha256-UKkzOn/w1mBxRmLLGrSeyB4e1xbrp4xylgAWb3M42pU="crossorigin="anonymous"
+                defer
+                >
+            </script><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.min.css"crossorigin="anonymous"
+            ><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.css"crossorigin="anonymous"
+            >
+
+            </main>
+        </div>
+        <script 
+                src="https://cdn.jsdelivr.net/npm/node-vibrant@3.1.6/dist/vibrant.min.js"integrity="sha256-awcR2jno4kI5X0zL8ex0vi2z&#43;KMkF24hUW8WePSA9HM="crossorigin="anonymous"
+                
+                >
+            </script><script type="text/javascript" src="/ts/main.1e9a3bafd846ced4c345d084b355fb8c7bae75701c338f8a1f8a82c780137826.js" defer></script>
+<script>
+    (function () {
+        const customFont = document.createElement('link');
+        customFont.href = "https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap";
+
+        customFont.type = "text/css";
+        customFont.rel = "stylesheet";
+
+        document.head.appendChild(customFont);
+    }());
+</script>
+<script>
+
+const live2d_path = "https://fastly.jsdelivr.net/gh/stevenjoezhang/live2d-widget@latest/";
+
+const cssPath = "https://Savannah99.github.io/waifu/waifu.css"
+const waifuTipsJsonPath = "https://Savannah99.github.io/waifu/waifu-tips.json"
+
+
+function loadExternalResource(url, type) {
+	return new Promise((resolve, reject) => {
+		let tag;
+
+		if (type === "css") {
+			tag = document.createElement("link");
+			tag.rel = "stylesheet";
+			tag.href = url;
+		}
+		else if (type === "js") {
+			tag = document.createElement("script");
+			tag.src = url;
+		}
+		if (tag) {
+			tag.onload = () => resolve(url);
+			tag.onerror = () => reject(url);
+			document.head.appendChild(tag);
+		}
+	});
+}
+
+
+if (screen.width >= 768) {
+	Promise.all([
+		loadExternalResource(cssPath, "css"),
+		loadExternalResource(live2d_path + "live2d.min.js", "js"),
+		loadExternalResource(live2d_path + "waifu-tips.js", "js")
+	]).then(() => {
+		
+		initWidget({
+			waifuPath: waifuTipsJsonPath,
+			
+			cdnPath: "https://fastly.jsdelivr.net/gh/fghrsh/live2d_api/",
+			tools: ["hitokoto", "asteroids", "switch-model", "switch-texture", "photo", "info", "quit"]
+		});
+	});
+}
+
+</script>
+    </body>
+</html>
