@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="zh-cn" dir="ltr">
+    <head><meta charset='utf-8'>
+<meta name='viewport' content='width=device-width, initial-scale=1'><meta name='description' content="知识蒸馏（knowledge Distillation） 简介： 模型压缩与优化，核心是将大型模型（教师网络）的知识迁移到轻量化模型（学生网络）中。 经典论文： Hinton 的 Distilling the Knowledge in a Neural Network 个人总结： 看了很多关于蒸馏的笔记，大致可概括为：学生模型网络结构可以与教师模型不同（更简单），参数数量通常比教师网络少，学生网络通过学习教师模型的输出来训练模型。 为什么学生网络效果不会太差： 常规预测（教师模型）由于 hard target（使用 one hot 编码如[0,1,0]）存在信息湮灭（信息湮灭：例如某个手写体 2 由于带了尾巴，被识别为 7 的概率为 0.6%，被识别为 3 的概率为 97%，导致负样本信息的丢失，模型最终只能学到很多的 2 和 3 很像，而无法学到有的 2 和 7 也很像。），学生模型使用教师模型生成的软目标（如[0.05, 0.15, 0.8]）设计目标函数（有公式推导，暂未细看），可以学习更丰富特征（我的理解是学生模型通过模仿教师模型的输出，弥补了参数少、网络结构简单带来的可学习信息量少的问题，因为教师模型的输出包含了许多信息）。 可做研究： 病理图像分类大模型压缩（target：研究需要突出模型压缩后的性能，具体来讲是占用空间小，但准确率损失少。Motivation：减少推理时间，便于实时检测病变；移动端轻量化部署[可能有工业落地场景才需要，只是把学生模型部署移动端缺乏学术创新性]；半监督知识蒸馏，使用人工标注数据训练教师模型，之后使用学生模型生成标注。） 技术特点： 依赖深度学习框架（PyTorch/TensorFlow），需要深度学习知识。 难点： 感觉像经验科学？需要通过大量实验选择表现好的简单网络结果作为学生模型采用的网络，参数维度也是需要不断地训练找出表现较好的参数维度的设计，可能不太好解释？ 优点： 对医学经验要求低，前期研究成本适中。 数据要求： 不强制要求医学数据，可以使用一些公开数据集先验证学生模型的性能。 clip 医学应用 简介： CLIP（Contrastive Language-Image Pre-training） 是由 OpenAI 提出的多模态预训练模型，其核心思想是通过对比学习将图像和文本映射到同一高维向量空间，建立可解释的对应关系。在医学领域，CLIP 的独特价值源于其能利用自然语言监督（如影像报告）解决医学数据标注稀缺的痛点。 相关论文： 《Xplainer: Explainable Zero-shot Diagnosis via LLM-guided CLIP》（分类与诊断 - 2024 MICCAI） 《AnomalyCLIP: Object-agnostic Zero-shot Anomaly Detection》（分割与检测 2024 CVPR） 《MedFusion: CLIP-guided Multimodal Synthesis for Lesion Simulation》（生成病变影响 - 2025 MICCAI） 《CLIP in Medical Imaging: A Comprehensive Survey》（综述，Medical Image Analysis） 个人总结： 把医学图像用 CNN 或 Transformer 转换为高维向量（比如 512 维），把诊断报告文本使用自然语言模型转换为同维度的向量（诊断报告文本需要清洗并结构化，如提取“部位 - 病变 - 属性”三元组），对齐同一病历的图像向量和文本向量（例如让他们的余弦相似度接近 1，可以使用 InfoNCE 损失函数）。 可做研究： 特定的医学图像 + 文本多模态训练模型，如胸片影像 + 文本训练（target：高准确率。Motivation：自动报告生成，输入影像即可生成文本；影像分类，输入自然语言[病变属性]即可对影像分类。） 技术特点： 需处理医学影像格式（DICOM/NIFTI）和医学文本（诊断报告），有开源医学框架 PLIP、MedCLIP 可学习，需要学习图像处理模型和自然语言处理模型。 难点： 需要同时学习自然语言处理模型和图像处理模型，代码实现可能相对复杂，前期学习成本较高。 优点： 多模态是近年的热点，较为前沿。可以使用公开的医学影像数据集，如 NIH Chest X-ray Dataset（胸部 x 光片，约 112120 张，部分子集提供放射科医生的详细裁决）、LIDC-IDRI（胸部 CT，包含对结节位置、大小及良恶性的独立标注）等。 数据要求： 一个 clip 模型可能无法适用于所有的病理图像，比如有针对肺结节的 clip 模型，有针对皮肤病变的 clip 模型，如果需要使用医生提供的数据建模，需要提前做好准备（了解病理图片的类型，文本的结构化形式，如果可以，能够在网上找到类似的开源图像更好）。 腹腔镜场景下的 3 维重建和暗市场处理（临床场景） 三维重建： 简介：将二维医学影像通过算法重构为三维模型。 个人总结：目前好像已经较为成熟，有商业软件（如 Philips XperCT）落地，但针对腹腔镜手术中光照不均、运动模糊等问题还可以进行优化。可采用 U-Net 变体、Transformer 网络或生成对抗网络（GAN），学习从 2D 到 3D 的映射关系。 难点： 模型参数量大，实时性要求高，需要的数据量大。 数据要求： 需要腹腔镜影像，公开的数据集有 Cholec80（80 个腹腔镜胆囊切除手术视频）、CholecSeg8K（从 Cholec80 中提取的 8080 帧图像）。 暗市场增强： 简介：针对影像中光照不足或遮挡问题，通过算法提升图像质量。 个人总结：对计算机图像处理背景知识要求较高，可以使用 Retinex 理论或 U-Net 架构分离光照与反射分量进行低光照增强，基于 GAN 生成高质量图像。 难点： 可能需要补充医学知识。 可行的研究路径（待续） 针对特定的病理图像数据设计 clip 模型 -&gt; 对该 clip 模型进行压缩。\n">
+<title>研究内容</title>
+
+<link rel='canonical' href='https://Savannah99.github.io/p/%E7%A0%94%E7%A9%B6%E5%86%85%E5%AE%B9/'>
+
+<link rel="stylesheet" href="/scss/style.min.663803bebe609202d5b39d848f2d7c2dc8b598a2d879efa079fa88893d29c49c.css"><meta property='og:title' content="研究内容">
+<meta property='og:description' content="知识蒸馏（knowledge Distillation） 简介： 模型压缩与优化，核心是将大型模型（教师网络）的知识迁移到轻量化模型（学生网络）中。 经典论文： Hinton 的 Distilling the Knowledge in a Neural Network 个人总结： 看了很多关于蒸馏的笔记，大致可概括为：学生模型网络结构可以与教师模型不同（更简单），参数数量通常比教师网络少，学生网络通过学习教师模型的输出来训练模型。 为什么学生网络效果不会太差： 常规预测（教师模型）由于 hard target（使用 one hot 编码如[0,1,0]）存在信息湮灭（信息湮灭：例如某个手写体 2 由于带了尾巴，被识别为 7 的概率为 0.6%，被识别为 3 的概率为 97%，导致负样本信息的丢失，模型最终只能学到很多的 2 和 3 很像，而无法学到有的 2 和 7 也很像。），学生模型使用教师模型生成的软目标（如[0.05, 0.15, 0.8]）设计目标函数（有公式推导，暂未细看），可以学习更丰富特征（我的理解是学生模型通过模仿教师模型的输出，弥补了参数少、网络结构简单带来的可学习信息量少的问题，因为教师模型的输出包含了许多信息）。 可做研究： 病理图像分类大模型压缩（target：研究需要突出模型压缩后的性能，具体来讲是占用空间小，但准确率损失少。Motivation：减少推理时间，便于实时检测病变；移动端轻量化部署[可能有工业落地场景才需要，只是把学生模型部署移动端缺乏学术创新性]；半监督知识蒸馏，使用人工标注数据训练教师模型，之后使用学生模型生成标注。） 技术特点： 依赖深度学习框架（PyTorch/TensorFlow），需要深度学习知识。 难点： 感觉像经验科学？需要通过大量实验选择表现好的简单网络结果作为学生模型采用的网络，参数维度也是需要不断地训练找出表现较好的参数维度的设计，可能不太好解释？ 优点： 对医学经验要求低，前期研究成本适中。 数据要求： 不强制要求医学数据，可以使用一些公开数据集先验证学生模型的性能。 clip 医学应用 简介： CLIP（Contrastive Language-Image Pre-training） 是由 OpenAI 提出的多模态预训练模型，其核心思想是通过对比学习将图像和文本映射到同一高维向量空间，建立可解释的对应关系。在医学领域，CLIP 的独特价值源于其能利用自然语言监督（如影像报告）解决医学数据标注稀缺的痛点。 相关论文： 《Xplainer: Explainable Zero-shot Diagnosis via LLM-guided CLIP》（分类与诊断 - 2024 MICCAI） 《AnomalyCLIP: Object-agnostic Zero-shot Anomaly Detection》（分割与检测 2024 CVPR） 《MedFusion: CLIP-guided Multimodal Synthesis for Lesion Simulation》（生成病变影响 - 2025 MICCAI） 《CLIP in Medical Imaging: A Comprehensive Survey》（综述，Medical Image Analysis） 个人总结： 把医学图像用 CNN 或 Transformer 转换为高维向量（比如 512 维），把诊断报告文本使用自然语言模型转换为同维度的向量（诊断报告文本需要清洗并结构化，如提取“部位 - 病变 - 属性”三元组），对齐同一病历的图像向量和文本向量（例如让他们的余弦相似度接近 1，可以使用 InfoNCE 损失函数）。 可做研究： 特定的医学图像 + 文本多模态训练模型，如胸片影像 + 文本训练（target：高准确率。Motivation：自动报告生成，输入影像即可生成文本；影像分类，输入自然语言[病变属性]即可对影像分类。） 技术特点： 需处理医学影像格式（DICOM/NIFTI）和医学文本（诊断报告），有开源医学框架 PLIP、MedCLIP 可学习，需要学习图像处理模型和自然语言处理模型。 难点： 需要同时学习自然语言处理模型和图像处理模型，代码实现可能相对复杂，前期学习成本较高。 优点： 多模态是近年的热点，较为前沿。可以使用公开的医学影像数据集，如 NIH Chest X-ray Dataset（胸部 x 光片，约 112120 张，部分子集提供放射科医生的详细裁决）、LIDC-IDRI（胸部 CT，包含对结节位置、大小及良恶性的独立标注）等。 数据要求： 一个 clip 模型可能无法适用于所有的病理图像，比如有针对肺结节的 clip 模型，有针对皮肤病变的 clip 模型，如果需要使用医生提供的数据建模，需要提前做好准备（了解病理图片的类型，文本的结构化形式，如果可以，能够在网上找到类似的开源图像更好）。 腹腔镜场景下的 3 维重建和暗市场处理（临床场景） 三维重建： 简介：将二维医学影像通过算法重构为三维模型。 个人总结：目前好像已经较为成熟，有商业软件（如 Philips XperCT）落地，但针对腹腔镜手术中光照不均、运动模糊等问题还可以进行优化。可采用 U-Net 变体、Transformer 网络或生成对抗网络（GAN），学习从 2D 到 3D 的映射关系。 难点： 模型参数量大，实时性要求高，需要的数据量大。 数据要求： 需要腹腔镜影像，公开的数据集有 Cholec80（80 个腹腔镜胆囊切除手术视频）、CholecSeg8K（从 Cholec80 中提取的 8080 帧图像）。 暗市场增强： 简介：针对影像中光照不足或遮挡问题，通过算法提升图像质量。 个人总结：对计算机图像处理背景知识要求较高，可以使用 Retinex 理论或 U-Net 架构分离光照与反射分量进行低光照增强，基于 GAN 生成高质量图像。 难点： 可能需要补充医学知识。 可行的研究路径（待续） 针对特定的病理图像数据设计 clip 模型 -&gt; 对该 clip 模型进行压缩。\n">
+<meta property='og:url' content='https://Savannah99.github.io/p/%E7%A0%94%E7%A9%B6%E5%86%85%E5%AE%B9/'>
+<meta property='og:site_name' content='LuningLee'>
+<meta property='og:type' content='article'><meta property='article:section' content='Post' /><meta property='article:published_time' content='2025-05-23T16:46:00&#43;08:00'/><meta property='article:modified_time' content='2025-05-23T16:46:00&#43;08:00'/>
+<meta name="twitter:title" content="研究内容">
+<meta name="twitter:description" content="知识蒸馏（knowledge Distillation） 简介： 模型压缩与优化，核心是将大型模型（教师网络）的知识迁移到轻量化模型（学生网络）中。 经典论文： Hinton 的 Distilling the Knowledge in a Neural Network 个人总结： 看了很多关于蒸馏的笔记，大致可概括为：学生模型网络结构可以与教师模型不同（更简单），参数数量通常比教师网络少，学生网络通过学习教师模型的输出来训练模型。 为什么学生网络效果不会太差： 常规预测（教师模型）由于 hard target（使用 one hot 编码如[0,1,0]）存在信息湮灭（信息湮灭：例如某个手写体 2 由于带了尾巴，被识别为 7 的概率为 0.6%，被识别为 3 的概率为 97%，导致负样本信息的丢失，模型最终只能学到很多的 2 和 3 很像，而无法学到有的 2 和 7 也很像。），学生模型使用教师模型生成的软目标（如[0.05, 0.15, 0.8]）设计目标函数（有公式推导，暂未细看），可以学习更丰富特征（我的理解是学生模型通过模仿教师模型的输出，弥补了参数少、网络结构简单带来的可学习信息量少的问题，因为教师模型的输出包含了许多信息）。 可做研究： 病理图像分类大模型压缩（target：研究需要突出模型压缩后的性能，具体来讲是占用空间小，但准确率损失少。Motivation：减少推理时间，便于实时检测病变；移动端轻量化部署[可能有工业落地场景才需要，只是把学生模型部署移动端缺乏学术创新性]；半监督知识蒸馏，使用人工标注数据训练教师模型，之后使用学生模型生成标注。） 技术特点： 依赖深度学习框架（PyTorch/TensorFlow），需要深度学习知识。 难点： 感觉像经验科学？需要通过大量实验选择表现好的简单网络结果作为学生模型采用的网络，参数维度也是需要不断地训练找出表现较好的参数维度的设计，可能不太好解释？ 优点： 对医学经验要求低，前期研究成本适中。 数据要求： 不强制要求医学数据，可以使用一些公开数据集先验证学生模型的性能。 clip 医学应用 简介： CLIP（Contrastive Language-Image Pre-training） 是由 OpenAI 提出的多模态预训练模型，其核心思想是通过对比学习将图像和文本映射到同一高维向量空间，建立可解释的对应关系。在医学领域，CLIP 的独特价值源于其能利用自然语言监督（如影像报告）解决医学数据标注稀缺的痛点。 相关论文： 《Xplainer: Explainable Zero-shot Diagnosis via LLM-guided CLIP》（分类与诊断 - 2024 MICCAI） 《AnomalyCLIP: Object-agnostic Zero-shot Anomaly Detection》（分割与检测 2024 CVPR） 《MedFusion: CLIP-guided Multimodal Synthesis for Lesion Simulation》（生成病变影响 - 2025 MICCAI） 《CLIP in Medical Imaging: A Comprehensive Survey》（综述，Medical Image Analysis） 个人总结： 把医学图像用 CNN 或 Transformer 转换为高维向量（比如 512 维），把诊断报告文本使用自然语言模型转换为同维度的向量（诊断报告文本需要清洗并结构化，如提取“部位 - 病变 - 属性”三元组），对齐同一病历的图像向量和文本向量（例如让他们的余弦相似度接近 1，可以使用 InfoNCE 损失函数）。 可做研究： 特定的医学图像 + 文本多模态训练模型，如胸片影像 + 文本训练（target：高准确率。Motivation：自动报告生成，输入影像即可生成文本；影像分类，输入自然语言[病变属性]即可对影像分类。） 技术特点： 需处理医学影像格式（DICOM/NIFTI）和医学文本（诊断报告），有开源医学框架 PLIP、MedCLIP 可学习，需要学习图像处理模型和自然语言处理模型。 难点： 需要同时学习自然语言处理模型和图像处理模型，代码实现可能相对复杂，前期学习成本较高。 优点： 多模态是近年的热点，较为前沿。可以使用公开的医学影像数据集，如 NIH Chest X-ray Dataset（胸部 x 光片，约 112120 张，部分子集提供放射科医生的详细裁决）、LIDC-IDRI（胸部 CT，包含对结节位置、大小及良恶性的独立标注）等。 数据要求： 一个 clip 模型可能无法适用于所有的病理图像，比如有针对肺结节的 clip 模型，有针对皮肤病变的 clip 模型，如果需要使用医生提供的数据建模，需要提前做好准备（了解病理图片的类型，文本的结构化形式，如果可以，能够在网上找到类似的开源图像更好）。 腹腔镜场景下的 3 维重建和暗市场处理（临床场景） 三维重建： 简介：将二维医学影像通过算法重构为三维模型。 个人总结：目前好像已经较为成熟，有商业软件（如 Philips XperCT）落地，但针对腹腔镜手术中光照不均、运动模糊等问题还可以进行优化。可采用 U-Net 变体、Transformer 网络或生成对抗网络（GAN），学习从 2D 到 3D 的映射关系。 难点： 模型参数量大，实时性要求高，需要的数据量大。 数据要求： 需要腹腔镜影像，公开的数据集有 Cholec80（80 个腹腔镜胆囊切除手术视频）、CholecSeg8K（从 Cholec80 中提取的 8080 帧图像）。 暗市场增强： 简介：针对影像中光照不足或遮挡问题，通过算法提升图像质量。 个人总结：对计算机图像处理背景知识要求较高，可以使用 Retinex 理论或 U-Net 架构分离光照与反射分量进行低光照增强，基于 GAN 生成高质量图像。 难点： 可能需要补充医学知识。 可行的研究路径（待续） 针对特定的病理图像数据设计 clip 模型 -&gt; 对该 clip 模型进行压缩。\n">
+    </head>
+    <body class="
+    article-page
+    ">
+    <script>
+        (function() {
+            const colorSchemeKey = 'StackColorScheme';
+            if(!localStorage.getItem(colorSchemeKey)){
+                localStorage.setItem(colorSchemeKey, "auto");
+            }
+        })();
+    </script><script>
+    (function() {
+        const colorSchemeKey = 'StackColorScheme';
+        const colorSchemeItem = localStorage.getItem(colorSchemeKey);
+        const supportDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches === true;
+
+        if (colorSchemeItem == 'dark' || colorSchemeItem === 'auto' && supportDarkMode) {
+            
+
+            document.documentElement.dataset.scheme = 'dark';
+        } else {
+            document.documentElement.dataset.scheme = 'light';
+        }
+    })();
+</script>
+<div class="container main-container flex on-phone--column extended"><aside class="sidebar left-sidebar sticky ">
+    <button class="hamburger hamburger--spin" type="button" id="toggle-menu" aria-label="切换菜单">
+        <span class="hamburger-box">
+            <span class="hamburger-inner"></span>
+        </span>
+    </button>
+
+    <header>
+        
+            
+            <figure class="site-avatar">
+                <a href="/">
+                
+                    
+                    
+                    
+                        
+                        <img src="/img/avatar_hu17057760802939032854.png" width="300"
+                            height="300" class="site-logo" loading="lazy" alt="Avatar">
+                    
+                
+                </a>
+                
+                    <span class="emoji">🐣</span>
+                
+            </figure>
+            
+        
+        
+        <div class="site-meta">
+            <h1 class="site-name"><a href="/">LuningLee</a></h1>
+            <h2 class="site-description">欢迎来到我的博客！我在这里记录一些生活日常和学习笔记！😸🥰🐕</h2>
+        </div>
+    </header><ol class="menu-social">
+            
+                <li>
+                    <a 
+                        href='https://github.com/Savannah99'
+                        target="_blank"
+                        title="GitHub"
+                        rel="me"
+                    >
+                        
+                        
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brand-github" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M9 19c-4.3 1.4 -4.3 -2.5 -6 -3m12 5v-3.5c0 -1 .1 -1.4 -.5 -2c2.8 -.3 5.5 -1.4 5.5 -6a4.6 4.6 0 0 0 -1.3 -3.2a4.2 4.2 0 0 0 -.1 -3.2s-1.1 -.3 -3.5 1.3a12.3 12.3 0 0 0 -6.2 0c-2.4 -1.6 -3.5 -1.3 -3.5 -1.3a4.2 4.2 0 0 0 -.1 3.2a4.6 4.6 0 0 0 -1.3 3.2c0 4.6 2.7 5.7 5.5 6c-.6 .6 -.6 1.2 -.5 2v3.5" />
+</svg>
+
+
+
+                        
+                    </a>
+                </li>
+            
+        </ol><ol class="menu" id="main-menu">
+        
+        
+        
+        <li >
+            <a href='/' >
+                
+                
+                
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-home" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <polyline points="5 12 3 12 12 3 21 12 19 12" />
+  <path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-7" />
+  <path d="M9 21v-6a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v6" />
+</svg>
+
+
+
+                
+                <span>主页</span>
+            </a>
+        </li>
+        
+        
+        <li >
+            <a href='/archives/' >
+                
+                
+                
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-archive" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <rect x="3" y="4" width="18" height="4" rx="2" />
+  <path d="M5 8v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-10" />
+  <line x1="10" y1="12" x2="14" y2="12" />
+</svg>
+
+
+
+                
+                <span>归档</span>
+            </a>
+        </li>
+        
+        
+        <li >
+            <a href='/search/' >
+                
+                
+                
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-search" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="10" cy="10" r="7" />
+  <line x1="21" y1="21" x2="15" y2="15" />
+</svg>
+
+
+
+                
+                <span>搜索</span>
+            </a>
+        </li>
+        
+        <li class="menu-bottom-section">
+            <ol class="menu">
+
+                
+                    <li id="dark-mode-toggle">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-left" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="8" cy="12" r="2" />
+  <rect x="2" y="6" width="20" height="12" rx="6" />
+</svg>
+
+
+
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-right" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="16" cy="12" r="2" />
+  <rect x="2" y="6" width="20" height="12" rx="6" />
+</svg>
+
+
+
+                        <span>暗色模式</span>
+                    </li>
+                
+            </ol>
+        </li>
+    </ol>
+</aside>
+
+    <aside class="sidebar right-sidebar sticky">
+        
+            
+                
+    <section class="widget archives">
+        <div class="widget-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-hash" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <line x1="5" y1="9" x2="19" y2="9" />
+  <line x1="5" y1="15" x2="19" y2="15" />
+  <line x1="11" y1="4" x2="7" y2="20" />
+  <line x1="17" y1="4" x2="13" y2="20" />
+</svg>
+
+
+
+        </div>
+        <h2 class="widget-title section-title">目录</h2>
+        
+        <div class="widget--toc">
+            <nav id="TableOfContents">
+  <ol>
+    <li>
+      <ol>
+        <li><a href="#知识蒸馏knowledge-distillation">知识蒸馏（knowledge Distillation）</a></li>
+        <li><a href="#clip-医学应用">clip 医学应用</a></li>
+        <li><a href="#腹腔镜场景下的-3-维重建和暗市场处理临床场景">腹腔镜场景下的 3 维重建和暗市场处理（临床场景）</a></li>
+        <li><a href="#可行的研究路径待续">可行的研究路径（待续）</a></li>
+      </ol>
+    </li>
+  </ol>
+</nav>
+        </div>
+    </section>
+
+            
+        
+    </aside>
+
+
+            <main class="main full-width">
+    <article class="main-article">
+    <header class="article-header">
+
+    <div class="article-details">
+    
+
+    <div class="article-title-wrapper">
+        <h2 class="article-title">
+            <a href="/p/%E7%A0%94%E7%A9%B6%E5%86%85%E5%AE%B9/">研究内容</a>
+        </h2>
+    
+        
+    </div>
+
+    
+    
+    
+    
+    <footer class="article-time">
+        
+            <div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-calendar-time" width="56" height="56" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M11.795 21h-6.795a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v4" />
+  <circle cx="18" cy="18" r="4" />
+  <path d="M15 3v4" />
+  <path d="M7 3v4" />
+  <path d="M3 11h16" />
+  <path d="M18 16.496v1.504l1 1" />
+</svg>
+                <time class="article-time--published">May 23, 2025</time>
+            </div>
+        
+
+        
+    </footer>
+    
+
+    
+</div>
+
+</header>
+
+    <section class="article-content">
+    
+    
+    <h3 id="知识蒸馏knowledge-distillation">知识蒸馏（knowledge Distillation）
+</h3><ul>
+<li><strong>简介</strong>：
+模型压缩与优化，核心是将大型模型（教师网络）的知识迁移到轻量化模型（学生网络）中。</li>
+<li><strong>经典论文</strong>：
+Hinton 的 Distilling the Knowledge in a Neural Network</li>
+<li><strong>个人总结</strong>：
+看了很多关于蒸馏的笔记，大致可概括为：学生模型网络结构可以与教师模型不同（更简单），参数数量通常比教师网络少，学生网络通过学习教师模型的输出来训练模型。</li>
+<li><strong>为什么学生网络效果不会太差</strong>：
+常规预测（教师模型）由于 hard target（使用 one hot 编码如[0,1,0]）存在信息湮灭（信息湮灭：例如某个手写体 2 由于带了尾巴，被识别为 7 的概率为 0.6%，被识别为 3 的概率为 97%，导致负样本信息的丢失，模型最终只能学到很多的 2 和 3 很像，而无法学到有的 2 和 7 也很像。），学生模型使用教师模型生成的软目标（如[0.05, 0.15, 0.8]）设计目标函数（有公式推导，暂未细看），可以学习更丰富特征（我的理解是学生模型通过模仿教师模型的输出，弥补了参数少、网络结构简单带来的可学习信息量少的问题，因为教师模型的输出包含了许多信息）。</li>
+<li><strong>可做研究</strong>：
+病理图像分类大模型压缩（target：研究需要突出模型压缩后的性能，具体来讲是占用空间小，但准确率损失少。Motivation：减少推理时间，便于实时检测病变；移动端轻量化部署[可能有工业落地场景才需要，只是把学生模型部署移动端缺乏学术创新性]；半监督知识蒸馏，使用人工标注数据训练教师模型，之后使用学生模型生成标注。）</li>
+<li><strong>技术特点</strong>：
+依赖深度学习框架（PyTorch/TensorFlow），需要深度学习知识。</li>
+<li><strong>难点</strong>：
+感觉像经验科学？需要通过大量实验选择表现好的简单网络结果作为学生模型采用的网络，参数维度也是需要不断地训练找出表现较好的参数维度的设计，可能不太好解释？</li>
+<li><strong>优点</strong>：
+对医学经验要求低，前期研究成本适中。</li>
+<li><strong>数据要求</strong>：
+不强制要求医学数据，可以使用一些公开数据集先验证学生模型的性能。</li>
+</ul>
+<h3 id="clip-医学应用">clip 医学应用
+</h3><ul>
+<li><strong>简介</strong>：
+CLIP（Contrastive Language-Image Pre-training） 是由 OpenAI 提出的多模态预训练模型，其核心思想是通过对比学习将图像和文本映射到同一高维向量空间，建立可解释的对应关系。在医学领域，CLIP 的独特价值源于其能利用自然语言监督（如影像报告）解决医学数据标注稀缺的痛点。</li>
+<li><strong>相关论文</strong>：
+<ul>
+<li>《Xplainer: Explainable Zero-shot Diagnosis via LLM-guided CLIP》（分类与诊断 - 2024 MICCAI）</li>
+<li>《AnomalyCLIP: Object-agnostic Zero-shot Anomaly Detection》（分割与检测 2024 CVPR）</li>
+<li>《MedFusion: CLIP-guided Multimodal Synthesis for Lesion Simulation》（生成病变影响 - 2025 MICCAI）</li>
+<li>《CLIP in Medical Imaging: A Comprehensive Survey》（综述，Medical Image Analysis）</li>
+</ul>
+</li>
+<li><strong>个人总结</strong>：
+把医学图像用 CNN 或 Transformer 转换为高维向量（比如 512 维），把诊断报告文本使用自然语言模型转换为同维度的向量（诊断报告文本需要清洗并结构化，如提取“部位 - 病变 - 属性”三元组），对齐同一病历的图像向量和文本向量（例如让他们的余弦相似度接近 1，可以使用 InfoNCE 损失函数）。</li>
+<li><strong>可做研究</strong>：
+特定的医学图像 + 文本多模态训练模型，如胸片影像 + 文本训练（target：高准确率。Motivation：自动报告生成，输入影像即可生成文本；影像分类，输入自然语言[病变属性]即可对影像分类。）</li>
+<li><strong>技术特点</strong>：
+需处理医学影像格式（DICOM/NIFTI）和医学文本（诊断报告），有开源医学框架 PLIP、MedCLIP 可学习，需要学习图像处理模型和自然语言处理模型。</li>
+<li><strong>难点</strong>：
+需要同时学习自然语言处理模型和图像处理模型，代码实现可能相对复杂，前期学习成本较高。</li>
+<li><strong>优点</strong>：
+多模态是近年的热点，较为前沿。可以使用公开的医学影像数据集，如 NIH Chest X-ray Dataset（胸部 x 光片，约 112120 张，部分子集提供放射科医生的详细裁决）、LIDC-IDRI（胸部 CT，包含对结节位置、大小及良恶性的独立标注）等。</li>
+<li><strong>数据要求</strong>：
+一个 clip 模型可能无法适用于所有的病理图像，比如有针对肺结节的 clip 模型，有针对皮肤病变的 clip 模型，如果需要使用医生提供的数据建模，需要提前做好准备（了解病理图片的类型，文本的结构化形式，如果可以，能够在网上找到类似的开源图像更好）。</li>
+</ul>
+<h3 id="腹腔镜场景下的-3-维重建和暗市场处理临床场景">腹腔镜场景下的 3 维重建和暗市场处理（临床场景）
+</h3><ul>
+<li><strong>三维重建</strong>：
+<ul>
+<li><strong>简介</strong>：将二维医学影像通过算法重构为三维模型。</li>
+<li><strong>个人总结</strong>：目前好像已经较为成熟，有商业软件（如 Philips XperCT）落地，但针对腹腔镜手术中光照不均、运动模糊等问题还可以进行优化。可采用 U-Net 变体、Transformer 网络或生成对抗网络（GAN），学习从 2D 到 3D 的映射关系。</li>
+<li><strong>难点</strong>：
+模型参数量大，实时性要求高，需要的数据量大。</li>
+<li><strong>数据要求</strong>：
+需要腹腔镜影像，公开的数据集有 Cholec80（80 个腹腔镜胆囊切除手术视频）、CholecSeg8K（从 Cholec80 中提取的 8080 帧图像）。</li>
+</ul>
+</li>
+<li><strong>暗市场增强</strong>：
+<ul>
+<li><strong>简介</strong>：针对影像中光照不足或遮挡问题，通过算法提升图像质量。</li>
+<li><strong>个人总结</strong>：对计算机图像处理背景知识要求较高，可以使用 Retinex 理论或 U-Net 架构分离光照与反射分量进行低光照增强，基于 GAN 生成高质量图像。</li>
+<li><strong>难点</strong>：
+可能需要补充医学知识。</li>
+</ul>
+</li>
+</ul>
+<h3 id="可行的研究路径待续">可行的研究路径（待续）
+</h3><p>针对特定的病理图像数据设计 clip 模型 -&gt; 对该 clip 模型进行压缩。</p>
+<hr>
+
+</section>
+
+
+    <footer class="article-footer">
+    
+
+    </footer>
+
+
+    
+        <link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css"integrity="sha384-n8MVd4RsNIU0tAv4ct0nTaAbDJwPJzDEaqSD1odI&#43;WdtXRGWt2kTvGFasHpSy3SV"crossorigin="anonymous"
+            ><script 
+                src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"integrity="sha384-XjKyOOlGwcjNTAIQHIpgOno0Hl1YQqzUOEleOLALmuqehneUG&#43;vnGctmUb0ZY0l8"crossorigin="anonymous"
+                defer
+                >
+            </script><script 
+                src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"integrity="sha384-&#43;VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4&#43;/RRE05"crossorigin="anonymous"
+                defer
+                >
+            </script><script>
+    window.addEventListener("DOMContentLoaded", () => {
+	const mainArticleElement = document.querySelector(".main-article");
+        renderMathInElement(mainArticleElement, {
+            delimiters: [
+                { left: "$$", right: "$$", display: true },
+                { left: "$", right: "$", display: false },
+                { left: "\\(", right: "\\)", display: false },
+                { left: "\\[", right: "\\]", display: true }
+            ],
+            ignoredClasses: ["gist"]
+        });})
+</script>
+
+    
+</article>
+
+    
+
+    
+
+     
+    
+        
+    
+
+    <footer class="site-footer">
+    <section class="copyright">
+        &copy; 
+        
+        2025 LuningLee
+    </section>
+    
+    <section class="powerby">
+        
+            流水不争先，滔滔而不绝 <br/>
+        使用 <a href="https://gohugo.io/" target="_blank" rel="noopener">Hugo</a> 构建 <br />
+        主题 <b><a href="https://github.com/CaiJimmy/hugo-theme-stack" target="_blank" rel="noopener" data-version="3.30.0">Stack</a></b> 由 <a href="https://jimmycai.com" target="_blank" rel="noopener">Jimmy</a> 设计
+    </section>
+</footer>
+
+
+    
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+
+    
+    <div class="pswp__bg"></div>
+
+    
+    <div class="pswp__scroll-wrap">
+
+        
+        <div class="pswp__container">
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+        </div>
+
+        
+        <div class="pswp__ui pswp__ui--hidden">
+
+            <div class="pswp__top-bar">
+
+                
+
+                <div class="pswp__counter"></div>
+
+                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+
+                <button class="pswp__button pswp__button--share" title="Share"></button>
+
+                <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+
+                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+
+                
+                
+                <div class="pswp__preloader">
+                    <div class="pswp__preloader__icn">
+                        <div class="pswp__preloader__cut">
+                            <div class="pswp__preloader__donut"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                <div class="pswp__share-tooltip"></div>
+            </div>
+
+            <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+            </button>
+
+            <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+            </button>
+
+            <div class="pswp__caption">
+                <div class="pswp__caption__center"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js"integrity="sha256-ePwmChbbvXbsO02lbM3HoHbSHTHFAeChekF1xKJdleo="crossorigin="anonymous"
+                defer
+                >
+            </script><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js"integrity="sha256-UKkzOn/w1mBxRmLLGrSeyB4e1xbrp4xylgAWb3M42pU="crossorigin="anonymous"
+                defer
+                >
+            </script><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.min.css"crossorigin="anonymous"
+            ><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.css"crossorigin="anonymous"
+            >
+
+            </main>
+        </div>
+        <script 
+                src="https://cdn.jsdelivr.net/npm/node-vibrant@3.1.6/dist/vibrant.min.js"integrity="sha256-awcR2jno4kI5X0zL8ex0vi2z&#43;KMkF24hUW8WePSA9HM="crossorigin="anonymous"
+                
+                >
+            </script><script type="text/javascript" src="/ts/main.1e9a3bafd846ced4c345d084b355fb8c7bae75701c338f8a1f8a82c780137826.js" defer></script>
+<script>
+    (function () {
+        const customFont = document.createElement('link');
+        customFont.href = "https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap";
+
+        customFont.type = "text/css";
+        customFont.rel = "stylesheet";
+
+        document.head.appendChild(customFont);
+    }());
+</script>
+<script>
+
+const live2d_path = "https://fastly.jsdelivr.net/gh/stevenjoezhang/live2d-widget@latest/";
+
+const cssPath = "https://Savannah99.github.io/waifu/waifu.css"
+const waifuTipsJsonPath = "https://Savannah99.github.io/waifu/waifu-tips.json"
+
+
+function loadExternalResource(url, type) {
+	return new Promise((resolve, reject) => {
+		let tag;
+
+		if (type === "css") {
+			tag = document.createElement("link");
+			tag.rel = "stylesheet";
+			tag.href = url;
+		}
+		else if (type === "js") {
+			tag = document.createElement("script");
+			tag.src = url;
+		}
+		if (tag) {
+			tag.onload = () => resolve(url);
+			tag.onerror = () => reject(url);
+			document.head.appendChild(tag);
+		}
+	});
+}
+
+
+if (screen.width >= 768) {
+	Promise.all([
+		loadExternalResource(cssPath, "css"),
+		loadExternalResource(live2d_path + "live2d.min.js", "js"),
+		loadExternalResource(live2d_path + "waifu-tips.js", "js")
+	]).then(() => {
+		
+		initWidget({
+			waifuPath: waifuTipsJsonPath,
+			
+			cdnPath: "https://fastly.jsdelivr.net/gh/fghrsh/live2d_api/",
+			tools: ["hitokoto", "asteroids", "switch-model", "switch-texture", "photo", "info", "quit"]
+		});
+	});
+}
+
+</script>
+    </body>
+</html>
